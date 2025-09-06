@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bot Test Web</title>
+<style>
+body { font-family: sans-serif; margin: 20px; }
+#chat { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+input { padding: 5px; width: 300px; }
+button { padding: 5px 10px; }
+</style>
+</head>
+<body>
+
+<h2>Chat Twitch Bot</h2>
+<div id="chat"></div>
+<input id="msgInput" placeholder="Escribe mensaje..." />
+<button onclick="sendMessage()">Enviar</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let activeUsers = [];
+
+    const chatDiv = document.querySelector('#chat');
+
+    socket.on('chat-message', (data) => {
+        const userExist = activeUsers.some( u => u[0] === data.user );
+
+        if ( !userExist ) {
+
+            if ( activeUsers.length == 0 ) {
+                activeUsers.push( [data.user, 1000] );
+                addLog(`user added: ${data.user}`);
+            } else {
+                activeUsers.push( [data.user, 0] );
+                addLog(`user added: ${data.user}`);
+            }
+
+        }
+
+        if ( data.message.startsWith('!damePts') ) {
+            damePts( data.user, 100 );
+        }
+
+    });
+
+    function sendMessage( message ) {
+        socket.emit('send-message', message);
+    }
+
+    function damePts( user, pts ) {
+        let userIndex = activeUsers.findIndex( u => u[0] === user );
+        if(userIndex === -1) return;
+
+        activeUsers[ userIndex ] = [ user, activeUsers[ userIndex ][1] + pts ];
+        addLog( `added ${pts} points to ${user}` );
+
+    }
+
+    function addLog( message ) {
+        chatDiv.innerHTML += `<p> ${message} </p>`;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
