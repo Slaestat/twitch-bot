@@ -107,9 +107,6 @@ let calabozo_enemies = {
 let pelea_activa = false,
     monster_active = '';
 
-
-
-
 function init_weapon( pickedClass ) {
     switch( pickedClass ) {
         case 'warrior':
@@ -181,7 +178,7 @@ function calabozoPelea( userName, enemyName) {
         addLog( `${userName} died.` );
         monster_active = '';
         pelea_activa = false;
-        delete user;
+        delete calabozo_player[userName];
     } else if ( enemy.health <= 0 ) {
         socket.emit( 'send-message', `${userName} slayed ${enemyName}.` );
         addLog( `${userName} slayed ${enemyName}.` );

@@ -101,17 +101,33 @@ button { padding: 5px 10px; }
 
         /* CALABOZO SETUP*/
 
+        //Calabozo Menu
+        if ( data.message.startsWith('!calabozo') ) {
+            socket.emit( 'send-message', `Calabozo es un juego en progreso pero ya tiene algunas funciones:
+            !create-w: creas tu personaje como guerrero ( warrior ).
+            !create-s: creas tu personaje como hechicero ( spellcaster ).
+            !create-b: creas tu personaje como bestia ( beast ).
+            
+            Si hay un enemigo en chat ( del juego, no 'aquel vato'):
+            !pelea: para reclamar el enemigo y pelear contra el.
+            
+            pendientes: sistema de recompenza, armas, sistema de nivel y sistema de habilidades.` );
+        }
+
         //Creating player
-        if ( data.message.startsWith('!calabozo-') ) {
+        if ( data.message.startsWith('!create-') ) {
             if ( !calabozo_player[ data.user ]) {
                 if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('w') ) {
                     calabozo_newPlayer( data.user, 'warrior' );
+                    socket.emit( 'send-message', `Un(a) nuev@ guerrer@ a nacido, su nombre es: ${data.user}` );
                     addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new warrior` );
                 } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('s') ) {
                     calabozo_newPlayer( data.user, 'spellcaster' );
+                    socket.emit( 'send-message', `Un(a) nuev@ hechicer@ a nacido, su nombre es: ${data.user}` );
                     addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new spellcaster` );
                 } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('b') ) {
                     calabozo_newPlayer( data.user, 'beast' );
+                    socket.emit( 'send-message', `Un(a) nuev@ besti@ a nacido, su nombre es: ${data.user}` );
                     addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new beast` );
                 } else {
                     socket.emit('send-message', `Sorry ${ data.user}, no class defined, write '!calabozo-w' for warrior, '!calabozo-s' for spellcaster or '!calabozo-b' fpr beast` );
