@@ -5,21 +5,21 @@ let calabozo_class = {
         damage : 300,
         mana : 100,
         health : 100,
-        resistance : 100,
+        resistance : .1,
         init_weapon: 'wooden sword'
     },
     'spellcaster' : {
         damage : 100,
         mana : 300,
         health : 150,
-        resistance : 50,
+        resistance : .05,
         init_weapon: 'basic wand'
     },
     'beast' : {
         damage : 500,
         mana : 20,
         health : 200,
-        resistance : 80,
+        resistance : .08,
         init_weapon: 'damaged claws'
     } 
 };
@@ -48,33 +48,64 @@ let calabozo_arma = {
             class: 'beast'
         }
     };
-let calabozo_minor = {
+let calabozo_enemies = {
         'wild dog' : {
-            health : 30,
+            health : 150,
             damage: 30,
-            evade: 10,
+            evade: .1,
             exp : 5,
-            effect: ''
+            effect : '',
+            type : "minor",
+            weakness : ['kinetic']
         },
         'crow' : {
-            health : 20,
+            health : 200,
             damage: 20,
-            evade: 25,
+            evade: .25,
             exp : 5,
-            effect: ''
+            effect : '',
+            type : "minor",
+            weakness : ['kinetic']
         },
         'snake' : {
-            health : 10,
+            health : 100,
             damage: 10,
             evade: 0,
             exp : 5,
-            effect: 'poison' 
+            effect : 'poison',
+            type : "minor",
+            weakness : ['kinetic']
+        },
+        'HiveMindBot: scout' : {
+            health : 1000,
+            damage: 100,
+            evade: .3,
+            exp : 50,
+            effect : '',
+            type : "major",
+            weakness : ['water']
+        },
+        'HiveMindBot: berserker' : {
+            health : 1250,
+            damage: 150,
+            evade: .4,
+            exp : 75,
+            effect : '',
+            type : "major",
+            weakness : ['water']
+        },
+        'HiveMindBot: CoreMind' : {
+            health : 3000,
+            damage: 500,
+            evade: .5,
+            exp : 200,
+            effect : '',
+            type : "boss",
+            weakness : []
         }
     };
-let calabozo_major = {};
-let calabozo_boss = {};
-let pelea_activa = false;
-let enemy_live = '';
+let pelea_activa = false,
+    monster_active = '';
 
 
 
@@ -100,47 +131,74 @@ function calabozo_newPlayer( user, pickedClass ){
         exp : 0,
         class : pickedClass,
         health : calabozo_class[ pickedClass ].health,
-        weapon : calabozo_class[ pickedClass ].weapon,
+        weapon : init_weapon( pickedClass ),
+        damage : calabozo_class[ pickedClass ].damage,
+        resistance : calabozo_class[ pickedClass ].resistance,
         abilities : []
     }
 }
 
-function calabozoPelea( user, enemy) {
-    pelea_activa = false;
-    addLog(`${user} acepto la pelea`);
-    socket.emit('send-message', `${user} acepto la pelea`);
+function calabozoPelea( userName, enemyName) {
+    let enemy = calabozo_enemies[enemyName],
+        user = calabozo_player[ userName ],
+        userDamage = user.damage * calabozo_arma[ user.weapon ].damage;
 
-    //if( user.health > 0 && enemy.health > 0 ){ //ESTO DEBERIA DE SER UN FOR
-    while( calabozo_player[user].health > 0 && calabozo_minor[enemy].health > 0 ) {
-        if ( ( Math.random() * 10 ) > ( Math.random() * 10 ) ){ // user vs enemy luck
-            calabozo_minor[enemy].health -= calabozo_player[user].damage;
-            addLog(`${user} hits ${enemy}`);
+    if ( enemy.weakness.includes( calabozo_arma[ user.weapon ].element ) ) {
+        userDamage *= 3;
+    }
+
+    pelea_activa = false;
+    addLog(`${userName} acepto la pelea`);
+    socket.emit('send-message', `${userName} acepto la pelea`);
+    
+    while( user.health > 0 && enemy.health > 0 ) {
+        if ( ( Math.random() * 10 ) > ( Math.random() * 10 ) ) {
+            console.log(`evade stat enemy: ${enemy.evade}`);
+            if ( Math.random() > enemy.evade ) {
+                enemy.health -= userDamage;
+                addLog(`${userName} hits ${enemyName}`);
+            } else {
+                addLog(`${userName} miss ${enemyName}`);
+            }
         } else {
-            calabozo_player[user].health -= calabozo_minor[enemy].damage;
-            addLog(`${enemy} hits ${user}`);
+            console.log(`evade stat user: ${user.resistance}`);
+            if ( Math.random() > user.resistance ) {
+                user.health -= enemy.damage;
+                addLog(`${enemyName} hits ${userName}`);
+            } else {
+                addLog(`${userName} parried ${enemyName}`);
+            }
         }
     }
 
-    if( calabozo_player[user].health <= 0 && calabozo_minor[enemy].health <= 0 ){
-        console.log('1');
-        socket.emit('send-message', `DOUBLE K.O. ${calabozo_player[user]} y ${calabozo_minor[enemy]} perecieron en batalla`);
-    } else if ( calabozo_player[user].health <= 0 ) {
-        console.log('2');
-        socket.emit('send-message', `${calabozo_player[user]} fue abatido.`);
+    if( user.health <= 0 && enemy.health <= 0 ){
+        socket.emit( 'send-message', `DOUBLE K.O. ${userName} y ${enemyName} perecieron en batalla` );
+        addLog( `DOUBLE K.O. ${userName} & ${enemyName} both died` );
+        monster_active = '';
+        pelea_activa = false;
+    } else if ( user.health <= 0 ) {
+        socket.emit( 'send-message', `${userName} died.` );
+        addLog( `${userName} died.` );
+        monster_active = '';
+        pelea_activa = false;
+        delete user;
     } else if ( enemy.health <= 0 ) {
-        console.log('3');
-        socket.emit('send-message', `${calabozo_player[user]} derrotó a ${calabozo_minor[enemy]}.`);
+        socket.emit( 'send-message', `${userName} slayed ${enemyName}.` );
+        addLog( `${userName} slayed ${enemyName}.` );
+        monster_active = '';
+        pelea_activa = false;
     }
 }
 
-function spawnMinor(){
-    const enemies = Object.keys( calabozo_minor ),
-        randomIndex = Math.floor( Math.random() * enemies.length ),
-        randomEnemyKey = enemies[randomIndex],
-        enemy = calabozo_minor[randomEnemyKey];
+function spawnEnemy( type ) {
+    const filteredEnemies = Object.keys(calabozo_enemies).filter(enemyKey => calabozo_enemies[enemyKey].type === type )
+        enemies = Object.keys( calabozo_enemies ),
+        randomIndex = Math.floor( Math.random() * filteredEnemies.length ),
+        randomEnemyKey = filteredEnemies[randomIndex],
+        enemy = calabozo_enemies[randomEnemyKey];
 
     pelea_activa = true;
-    enemy_live = randomEnemyKey;
+    monster_active = randomEnemyKey;
 
     addLog(`Un ${randomEnemyKey} aparecio en chat`);
     socket.emit('send-message', `Un ${randomEnemyKey} aparecio en chat`);

@@ -124,7 +124,7 @@ button { padding: 5px 10px; }
         //Pelea
         if ( data.message.startsWith('!pelea') ) {
             if ( pelea_activa ) {
-                calabozoPelea( data.user, enemy_live);
+                calabozoPelea( data.user, monster_active);
             } else {
                 socket.emit('send-message', `no hay enemigos en chat... no del juego calabozo al menos`);
             }
@@ -134,8 +134,31 @@ button { padding: 5px 10px; }
 
     //Spawning enemy
     document.querySelector('.spawnMinor').addEventListener('click', function() {
-        spawnMinor();
-    })
+        if ( !pelea_activa ) {
+            spawnEnemy( 'minor' );
+        } else {
+            addLog( `already a monster in chat: ${ monster_active }` );
+            socket.emit('send-message', `${ monster_active } still lurking in chat, fight it with "!pelea" in chat`);
+        }
+    });
+    
+    document.querySelector('.spawnMajor').addEventListener('click', function() {
+        if ( !pelea_activa ) {
+            spawnEnemy( 'major' );
+        } else {
+            addLog( `already a monster in chat: ${ monster_active }` );
+            socket.emit('send-message', `${ monster_active } still lurking in chat, fight it with "!pelea" in chat`);
+        }
+    });
+    
+    document.querySelector('.spawnBoss').addEventListener('click', function() {
+        if ( !pelea_activa ) {
+            spawnEnemy( 'boss' );
+        } else {
+            addLog( `already a monster in chat: ${ monster_active }` );
+            socket.emit('send-message', `${ monster_active } still lurking in chat, fight it with "!pelea" in chat`);
+        }
+    });
 
     function sendMessage( message ) {
         socket.emit('send-message', message);
