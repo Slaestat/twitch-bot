@@ -121,6 +121,48 @@ function init_weapon( pickedClass ) {
     }
 }
 
+function dungeon_instruction( socket ) {
+    socket.emit( 'send-message', `Calabozo es un juego en progreso pero ya tiene algunas funciones:
+    !create-w: creas tu personaje como guerrero ( warrior ).
+    !create-s: creas tu personaje como hechicero ( spellcaster ).
+    !create-b: creas tu personaje como bestia ( beast ).
+    
+    Si hay un enemigo en chat ( del juego, no 'aquel vato'):
+    !pelea: para reclamar el enemigo y pelear contra el.
+    
+    pendientes: sistema de recompenza, armas, sistema de nivel y sistema de habilidades.` );
+}
+
+function dungeon_createPlayer( data ) {
+    if ( !calabozo_player[ data.user ]) {
+        if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('w') ) {
+            calabozo_newPlayer( data.user, 'warrior' );
+            socket.emit( 'send-message', `Un(a) nuev@ guerrer@ a nacido, su nombre es: ${data.user}` );
+            addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new warrior` );
+        } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('s') ) {
+            calabozo_newPlayer( data.user, 'spellcaster' );
+            socket.emit( 'send-message', `Un(a) nuev@ hechicer@ a nacido, su nombre es: ${data.user}` );
+            addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new spellcaster` );
+        } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('b') ) {
+            calabozo_newPlayer( data.user, 'beast' );
+            socket.emit( 'send-message', `Un(a) nuev@ besti@ a nacido, su nombre es: ${data.user}` );
+            addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new beast` );
+        } else {
+            socket.emit('send-message', `Sorry ${ data.user}, no class defined, write '!calabozo-w' for warrior, '!calabozo-s' for spellcaster or '!calabozo-b' fpr beast` );
+        }
+    } else {
+        socket.emit('send-message', `sorry ${ data.user } already exist`);
+    }
+}
+
+function dungeon_fight( data ) {
+    if ( pelea_activa ) {
+        calabozoPelea( data.user, monster_active);
+    } else {
+        socket.emit('send-message', `no hay enemigos en chat... no del juego calabozo al menos`);
+    }
+}
+
 function calabozo_newPlayer( user, pickedClass ){
     calabozo_player[ user ] = {
         name : user,

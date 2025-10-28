@@ -4,56 +4,103 @@
 <meta charset="UTF-8">
 <title>Bot Test Web</title>
 <style>
-body { font-family: sans-serif; margin: 20px; }
-#chat { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
-input { padding: 5px; width: 300px; }
-button { padding: 5px 10px; }
+    body { font-family: sans-serif; margin: 20px; }
+    #chat { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+    input { padding: 5px; width: 300px; }
+    button { padding: 5px 10px; }
 
-.calabozo {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-}
+    .calabozo {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid;
+        padding: 15px;
+        display: none;
+    }
 
-.calabozo .header {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-}
+    .calabozo .header {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
 
-.calabozo .btns {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-}
+    .calabozo .btns {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
 
-.calabozo .btns .btn {
-    padding: 10px;
-    border-radius: 30px;
-    cursor: pointer;
-}
+    .calabozo .btns .btn {
+        padding: 10px;
+        border-radius: 30px;
+        cursor: pointer;
+    }
 
-.calabozo .btns .spawnMinor {
-    background-color: #FF3400;
-    color: #ffffff;
-}
+    .calabozo .btns .spawnMinor {
+        background-color: #FF3400;
+        color: #ffffff;
+    }
 
-.calabozo .btns .spawnMajor {
-    background-color: #FF8800;
-    color: #ffffff;
-}
+    .calabozo .btns .spawnMajor {
+        background-color: #FF8800;
+        color: #ffffff;
+    }
 
-.calabozo .btns .spawnBoss {
-    background-color: #FFD900;
-}
+    .calabozo .btns .spawnBoss {
+        background-color: #FFD900;
+    }
+
+    .quickPoll {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid;
+        padding: 15px;
+    }
+
+    .quickPoll .header {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .quickPoll .instructive {
+        text-align: center;
+    }
+
+    .quickPoll .btns {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .quickPoll .btns .btn {
+        padding: 10px;
+        margin: 10px 0 0 0;
+        border-radius: 30px;
+        cursor: pointer;
+    }
+
+    .quickPoll .pollStart {
+        background-color: lightblue;
+    }
+
+    .quickPoll .pollEnd {
+        background-color: lightcoral;
+    }
 </style>
-<script src="calabozo.js" ></script>
 </head>
 <body>
 
@@ -72,11 +119,35 @@ button { padding: 5px 10px; }
         <div class="btn spawnBoss"> Spawn boss enemy </div>
     </div>
 </div>
+<div class="quickPoll">
+    <div class="header">
+        <h1>Poll rapida</h1>
+    </div>
+    <div class="instructive">
+        Este apartado es para iniciar un rapido conteo ( hasta 5 opciones ), poniendote de acuerdo con chat sobre las opciones
+        y mientras la encuesta este activa leera chat y contara los numeros del 1 a 5 colocados.
+    </div>
+    <div class="btns">
+        <div class="btn pollStart"> Iniciar encuesta </div>
+        <div class="btn pollEnd"> Terminar encuesta </div>
+    </div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="streamSetup.js"></script>
+<script src="calabozo.js"></script>
 <script>
     const socket = io();
-    let activeUsers = [];
+    let activeUsers = [],
+        activePoll = false,
+        pollUsers = [],
+        quickPollVaules = {
+            "1" : 0,
+            "2" : 0,
+            "3" : 0,
+            "4" : 0,
+            "5" : 0
+        };
 
     const chatDiv = document.querySelector('#chat');
 
@@ -95,55 +166,49 @@ button { padding: 5px 10px; }
 
         }
 
+        /* Regular commands */
+        if ( data.message.startsWith('!so') ) {
+            if( mods.includes( data.user.toLowerCase() ) ){
+                shoutout( data.message.split(' ')[1] );
+            }
+        }
+
         if ( data.message.startsWith('!damePts') ) {
             damePts( data.user, 100 );
         }
 
-        /* CALABOZO SETUP*/
+        /* CALABOZO SETUP */
 
         //Calabozo Menu
         if ( data.message.startsWith('!calabozo') ) {
-            socket.emit( 'send-message', `Calabozo es un juego en progreso pero ya tiene algunas funciones:
-            !create-w: creas tu personaje como guerrero ( warrior ).
-            !create-s: creas tu personaje como hechicero ( spellcaster ).
-            !create-b: creas tu personaje como bestia ( beast ).
-            
-            Si hay un enemigo en chat ( del juego, no 'aquel vato'):
-            !pelea: para reclamar el enemigo y pelear contra el.
-            
-            pendientes: sistema de recompenza, armas, sistema de nivel y sistema de habilidades.` );
+            dungeon_instruction( socket );
         }
 
         //Creating player
         if ( data.message.startsWith('!create-') ) {
-            if ( !calabozo_player[ data.user ]) {
-                if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('w') ) {
-                    calabozo_newPlayer( data.user, 'warrior' );
-                    socket.emit( 'send-message', `Un(a) nuev@ guerrer@ a nacido, su nombre es: ${data.user}` );
-                    addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new warrior` );
-                } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('s') ) {
-                    calabozo_newPlayer( data.user, 'spellcaster' );
-                    socket.emit( 'send-message', `Un(a) nuev@ hechicer@ a nacido, su nombre es: ${data.user}` );
-                    addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new spellcaster` );
-                } else if ( data.message.split('-')[1].toLocaleLowerCase().startsWith('b') ) {
-                    calabozo_newPlayer( data.user, 'beast' );
-                    socket.emit( 'send-message', `Un(a) nuev@ besti@ a nacido, su nombre es: ${data.user}` );
-                    addLog( `new user for 'calabozo' has been created ( ${data.user} ) as a new beast` );
-                } else {
-                    socket.emit('send-message', `Sorry ${ data.user}, no class defined, write '!calabozo-w' for warrior, '!calabozo-s' for spellcaster or '!calabozo-b' fpr beast` );
-                }
-            } else {
-                socket.emit('send-message', `sorry ${ data.user } already exist`);
-            }
+            dungeon_createPlayer( data );
         }
 
         //Pelea
         if ( data.message.startsWith('!pelea') ) {
-            if ( pelea_activa ) {
-                calabozoPelea( data.user, monster_active);
-            } else {
-                socket.emit('send-message', `no hay enemigos en chat... no del juego calabozo al menos`);
-            }
+            dungeon_fight( data );
+        }
+
+        /* POLL COUNT */
+        if ( data.message.startsWith('1') ) {
+            activePoll ? quickPollVaules['1']++ : null;
+        }
+        if ( data.message.startsWith('2') ) {
+            activePoll ? quickPollVaules['2']++ : null;
+        }
+        if ( data.message.startsWith('3') ) {
+            activePoll ? quickPollVaules['3']++ : null;
+        }
+        if ( data.message.startsWith('4') ) {
+            activePoll ? quickPollVaules['4']++ : null;
+        }
+        if ( data.message.startsWith('5') ) {
+            activePoll ? quickPollVaules['5']++ : null;
         }
 
     }); 
@@ -175,6 +240,31 @@ button { padding: 5px 10px; }
             socket.emit('send-message', `${ monster_active } still lurking in chat, fight it with "!pelea" in chat`);
         }
     });
+
+    /* POLL SETUP */
+    document.querySelector('.btn.pollStart').addEventListener( 'click', function() {
+        activePoll = true;
+
+        addLog( `Encuesta iniciada` );
+        sendMessage( `Encuesta iniciada` );
+    })
+
+    document.querySelector('.btn.pollEnd').addEventListener('click', function() {
+        let ganador = Object.entries( quickPollVaules ).reduce((a, b) => 
+            b[1] > a[1] ? b : a
+            )[0];
+            
+        addLog( `El ganador es: ${ganador}` );
+        sendMessage( `El ganador es: ${ganador}` );
+        activePoll = false;
+        quickPollVaules = {
+            "1" : 0,
+            "2" : 0,
+            "3" : 0,
+            "4" : 0,
+            "5" : 0
+        };
+    })
 
     function sendMessage( message ) {
         socket.emit('send-message', message);
