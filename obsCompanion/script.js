@@ -3,7 +3,7 @@
 const title = document.querySelector('.header h1'),
     consoleLog = document.querySelector('.console-log'),
     chat = document.querySelector('.chat'),
-    version = '0.01',
+    version = '0.02',
     socket = io();
 
 title.textContent = `OBS Companion ${version}`;
@@ -13,7 +13,15 @@ socket.on('chat-message', (data) => {
     if( data.message.startsWith('!') || data.message.startsWith('#') ) {
         
     } else {
-        chat.innerHTML += `<span class='${ data.user }'> ${ data.user } </span> ${ data.message } <br />`;
+
+        let newMessage = document.createElement('div'),
+            user = data.user.replace('/\W/g, "_"');
+
+        newMessage.classList.add('message');
+        newMessage.innerHTML += `<span class='${ user }'> ${ user } </span> ${ data.message }`;
+        chat.appendChild(newMessage);
+        chat.scrollTop = chat.scrollHeight;
+
     }
 
 })

@@ -37,6 +37,12 @@ body {
 
 .chat {
     color: #ffffff;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.chat .message {
+    width: 100%;
 }
 
 .chat span {
@@ -44,6 +50,6 @@ body {
     font-weight: bold;
 }
 
-.chat .span.slaestat {
+.chat span.SLAESTAT {
     color: #ff00ff;
 }
