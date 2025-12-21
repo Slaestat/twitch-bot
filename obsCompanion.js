@@ -26,10 +26,30 @@ const client = new tmi.Client({
 
 client.connect().catch(console.error);
 
+function getUserRole(tags) {
+    if (tags.badges?.broadcaster) return 'streamer';
+    if (tags.mod) return 'mod';
+    if (tags.badges?.vip) return 'vip';
+    if (tags.subscriber) return 'sub';
+    return 'viewer';
+}
+
 // Escucha chat y envía al cliente web
 client.on('message', (channel, tags, message, self) => {
     if (self) return;
-    io.emit('chat-message', { user: tags['display-name'] || tags.username, message });
+
+    const role = getUserRole(tags);
+
+    console.log(`${tags.username} => ${role}`);
+    
+    io.emit('chat-message', {
+        user: tags['display-name'],
+        username: tags.username,
+        role: getUserRole(tags),
+        badges: tags.badges,
+        color: tags.color,
+        message
+    });
 });
 
 // Socket.io
