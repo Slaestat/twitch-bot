@@ -4,8 +4,8 @@ const container = document.querySelector('.container'),
     title = document.querySelector('.header h1'),
     consoleLog = document.querySelector('.console-log'),
     chat = document.querySelector('.chat'),
-    version = '0.03',
-    max_message = 50,
+    version = '0.05',
+    max_message = 3,
     socket = io();
 
 let transparencyTimer = null;
@@ -48,7 +48,16 @@ socket.on('chat-message', (data) => {
 
         newMessage.classList.add('message');
         newMessage.classList.add( data.role );
-        newMessage.innerHTML += `<span class='${ user }'> ${ roleIcon } ${ user } </span> ${ data.message }`;
+        newMessage.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                ${roleIcon} ${user}
+                </div>
+                <div class="card-body">
+                ${data.message}
+                </div>
+            </div>
+            `;
         chat.appendChild(newMessage);
         if (chat.children.length > max_message) {
             chat.removeChild(chat.firstChild);
