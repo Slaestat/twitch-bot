@@ -5,7 +5,7 @@ const container = document.querySelector('.container'),
     consoleLog = document.querySelector('.console-log'),
     chat = document.querySelector('.chat'),
     version = '0.05',
-    max_message = 3,
+    max_message = 8,
     socket = io();
 
 let transparencyTimer = null;
